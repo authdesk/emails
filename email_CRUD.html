@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Email List Manager</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 10px
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse
+        }
+
+        th,
+        td {
+            border: 1px solid #ccc;
+            padding: 5px
+        }
+
+        .checkbox{
+            width: 30px;
+
+        }
+
+        .number {
+            width: 30px;
+        }
+
+        input[type=text] {
+            padding: 8px;
+            width: 100%;
+            max-width: 300px
+        }
+
+        button {
+            padding: 8px 12px;
+            margin: 4px
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Email List Manager</h2>
+    <input type=file id=f accept=".csv"><button onclick="exp()">Export CSV</button><br><br>
+    <input id=s placeholder="Search..." oninput="render()"><button onclick="add()">Add Email</button>
+    <table>
+        <thead>
+            <tr>
+                <th class="checkbox"><input type=checkbox id=all onchange="toggleAll(this.checked)"></th>
+                <th class="number">#</th>
+                <th>Email</th>
+            </tr>
+        </thead>
+        <tbody id=tb></tbody>
+    </table>
+    <script>
+        let data = [];
+        f.onchange = e => {
+            const r = new FileReader();
+            r.onload = () => {
+                let lines = r.result.trim().split(/\r?\n/);
+                data = [];
+                for (let i = 1; i < lines.length; i++) {
+                    let c = lines[i].split(',');
+                    if (c[0]) data.push({ email: c[0].trim(), checked: (c[1] || 'false').trim() == 'true' });
+                }
+                render();
+            };
+            r.readAsText(e.target.files[0]);
+        };
+        function render() {
+            let q = s.value.toLowerCase();
+            tb.innerHTML = '';
+            data.filter(x => x.email.toLowerCase().includes(q)).forEach((x, i) => {
+                tb.innerHTML += `<tr><td><input type=checkbox ${x.checked ? 'checked' : ''} onchange="data[${i}].checked=this.checked"></td><td>${i + 1}</td><td>${x.email}</td></tr>`;
+            });
+        }
+        function toggleAll(v) { data.forEach(x => x.checked = v); render(); }
+        function add() { let e = prompt("Email"); if (e) { data.push({ email: e, checked: false }); render(); } }
+        function exp() {
+            let csv = 'email,checked\n' + data.map(x => x.email + ',' + x.checked).join('\n');
+            let a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+            a.download = 'emails.csv'; a.click();
+        }
+    </script>
+</body>
+
+</html>
